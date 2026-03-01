@@ -16,6 +16,6 @@ class Payment(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
-    amount: Mapped[int]
+    amount: Mapped[float]
     status: Mapped[Status] = mapped_column(default=Status.pending)
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
