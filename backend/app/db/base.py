@@ -9,7 +9,7 @@ DATABASE_URL = settings.DATABASE_URL
 engine = create_async_engine(DATABASE_URL)
 
 
-new_session = async_sessionmaker(engine, expire_on_commit=False)
+new_session = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
 
 
 class Base(DeclarativeBase):
