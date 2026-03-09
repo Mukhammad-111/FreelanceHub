@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import ForeignKey, func, Text
+from sqlalchemy import ForeignKey, func, Text, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 import enum
 from app.db.base import Base
@@ -19,5 +19,5 @@ class Response(Base):
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     freelancer_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     message: Mapped[Text] = mapped_column(Text())
-    status: Mapped[Status] = mapped_column(default=Status.pending)
+    status: Mapped[Status] = mapped_column(Enum(Status), default=Status.pending)
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
