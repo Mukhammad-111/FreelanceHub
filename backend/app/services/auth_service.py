@@ -16,3 +16,4 @@ async def register_user(data: UserRegister, db: AsyncSession):
     except Exception:
         await db.rollback()
         raise
+

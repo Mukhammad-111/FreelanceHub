@@ -16,6 +16,9 @@ class Base(DeclarativeBase):
     pass
 
 
+from app.models import order, category, user  # noqa
+
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
