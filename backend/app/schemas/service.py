@@ -5,12 +5,14 @@ class ServiceCreate(BaseModel):
     title: str
     description: str
     price: float
-    freelancer_id: int = Field(ge=1)
     category_id: int = Field(ge=1)
 
 
 class ServiceUpdate(ServiceCreate):
-    pass
+    title: str | None = None
+    description: str | None = None
+    price: float | None = None
+    category_id: int | None = None
 
 
 class ServiceUpdateResponse(BaseModel):

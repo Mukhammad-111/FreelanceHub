@@ -11,30 +11,19 @@ from app.models.user import User
 from app.models.category import Category
 
 
-async def add_service(data_service: ServiceCreate, db: AsyncSession):
-    result = await db.execute(select(Service).where(Service.title == data_service.title))
-    existing_service = result.scalar_one_or_none()
-    if existing_service:
-        raise HTTPException(status_code=409, detail="Service already exists")
-
-    existing_freelancer = await db.execute(select(User).where(User.id == data_service.freelancer_id))
-    freelancer = existing_freelancer.scalar_one_or_none()
-    if not freelancer:
-        raise HTTPException(status_code=404,
-                            detail=f"Freelancer with id {data_service.freelancer_id} not found")
-
-    existing_category = await db.execute(select(Category).
-                                         where(Category.id == data_service.category_id))
-    category = existing_category.scalar_one_or_none()
+async def add_service(data_service: ServiceCreate,
+                      current_user: User,
+                      db: AsyncSession):
+    result = await db.execute(select(Category).where(Category.id == data_service.category_id))
+    category = result.scalar_one_or_none()
     if not category:
-        raise HTTPException(status_code=404,
-                            detail=f"Category with id {data_service.category_id} not found")
+        raise HTTPException(status_code=404, detail="Category is not found")
 
     new_service = Service(
         title=data_service.title,
-        description=data_service.description,
         price=data_service.price,
-        freelancer_id=data_service.freelancer_id,
+        description=data_service.description,
+        freelancer_id=current_user.id,
         category_id=data_service.category_id,
     )
     created_service = await ServiceRepository.create(new_service, db)
@@ -43,12 +32,14 @@ async def add_service(data_service: ServiceCreate, db: AsyncSession):
     return {"id": created_service.id,
             "title": created_service.title}
 
-async def get_all_services(db: AsyncSession):
-    return await ServiceRepository.get_all(db)
+async def get_all_services(limit: int, offset: int, db: AsyncSession):
+    return await ServiceRepository.get_all(limit=limit, offset=offset, db=db)
 
 
 async def get_one_service(service_id: int, db: AsyncSession):
     service = await ServiceRepository.get_by_id(service_id, db)
+    if not service:
+        raise HTTPException(status_code=404, detail=f"Service with id: '{service_id}' not found")
     return {"id": service.id,
             "title": service.title,
             "price": service.price,
@@ -58,11 +49,34 @@ async def get_one_service(service_id: int, db: AsyncSession):
 
 async def put_service(service_id: int,
                       data: ServiceUpdate,
+                      current_user: User,
                       db: AsyncSession):
-    await ServiceRepository.update(service_id, data, db)
+    service = await ServiceRepository.get_by_id(service_id, db)
+    if not service:
+        raise HTTPException(status_code=404, detail=f"Service with id: '{service_id}' not found")
+
+    if service.freelancer_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not the owner of this service")
+
+    if service.category_id != data.category_id:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    await ServiceRepository.update(service, data, db)
+    await db.commit()
     return {"message": "Service updated successfully"}
 
 
-async def delete_service(service_id, db: AsyncSession):
-    await ServiceRepository.delete(service_id, db)
+async def delete_service(service_id: int,
+                         current_user: User,
+                         db: AsyncSession):
+    result = await db.execute(select(Service).where(Service.id == service_id))
+    service = result.scalar_one_or_none()
+    if not service:
+        raise HTTPException(status_code=404, detail=f"Service with id: '{service_id}' not found")
+
+    if service.freelancer_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not the owner of this service")
+
+    await ServiceRepository.delete(service, db)
+    await db.commit()
     return {"message": "Service deleted successfully"}
