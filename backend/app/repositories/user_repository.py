@@ -1,44 +1,19 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
+from app.repositories.base_repository import BaseRepository
 
 
-class UserRepository:
-    @staticmethod
-    async def create(user_data: User, db: AsyncSession):
-        db.add(user_data)
-        await db.flush()
-        return user_data
+class UserRepository(BaseRepository):
+    model = User
 
-    @staticmethod
-    async def update(user: User, db: AsyncSession):
-        await db.flush()
-        return user
-
-    @staticmethod
-    async def delete(user: User, db: AsyncSession):
-        db.delete(user)
-
-    @staticmethod
-    async def get_by_id(user_id: int, db: AsyncSession):
-        request = select(User).where(User.id == user_id)
-        result = await db.execute(request)
+    @classmethod
+    async def get_by_email(cls, email: str, db: AsyncSession):
+        result = await db.execute(select(cls.model).where(cls.model.email == email))
         return result.scalar_one_or_none()
 
-    @staticmethod
-    async def get_by_email(email: str, db: AsyncSession):
-        request = select(User).where(User.email == email)
-        result = await db.execute(request)
-        return result.scalar_one_or_none()
-
-    @staticmethod
-    async def count_all(db: AsyncSession):
-        request = select(User).order_by(User.id)
-        result = await db.execute(request)
-        return result.scalars().all()
-
-    @staticmethod
-    async def count_by_role(role: str, db: AsyncSession):
-        request = select(User).where(User.role == role)
-        result = await db.execute(request)
-        return result.scalar_one_or_none()
+    @classmethod
+    async def total_users(cls, db: AsyncSession):
+        query = select(func.count(cls.model.id))
+        result = await db.execute(query)
+        return result.scalar()

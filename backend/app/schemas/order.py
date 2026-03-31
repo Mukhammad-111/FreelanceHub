@@ -1,5 +1,5 @@
 import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from app.models.order import OrderStatus
 
@@ -22,18 +22,49 @@ class OrderStatusUpdate(BaseModel):
     status: OrderStatus
 
 
-class OrderResponse(BaseModel):
+class OrderItems(BaseModel):
     id: int
     title: str
     budget: float
     status: OrderStatus
+    category_id: int
     created_at: datetime.datetime
 
     model_config = {"from_attributes": True}
 
 
-class OrderDetailResponse(OrderResponse):
+class OrderResponse(BaseModel):
+    page: int
+    limit: int
+    items: list[OrderItems]
+
+    model_config = {"from_attributes": True}
+
+
+class OrderOne(BaseModel):
+    id: int
+    title: str
     description: str
+    budget: float
+    status: OrderStatus
+    category_id: int
+    client_id: int
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderDetailResponse(BaseModel):
+    title: str
+    description: str
+    budget: float
+    status: OrderStatus
     client_id: int
     category_id: int
     updated_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderDeleteResponse(BaseModel):
+    message: str

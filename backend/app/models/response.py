@@ -3,6 +3,7 @@ from sqlalchemy import ForeignKey, func, Text, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 from app.db.base import Base
+from app.models.order import Order
 
 
 class ResponseStatus(enum.Enum):
@@ -21,4 +22,4 @@ class Response(Base):
     status: Mapped[ResponseStatus] = mapped_column(Enum(ResponseStatus), default=ResponseStatus.pending)
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
 
-    order = relationship("Order")
+    order: Mapped["Order"] = relationship("Order", back_populates="responses")

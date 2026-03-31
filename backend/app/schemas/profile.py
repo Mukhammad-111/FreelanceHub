@@ -1,18 +1,24 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
-class UsersMeResponse(BaseModel):
+class ProfilePut(BaseModel):
+    name: str | None
+    bio: str | None
+    skills: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProfileItems(ProfilePut):
+    rating: float
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProfileResponse(BaseModel):
     id: int
     email: str
     role: str
-    profile: dict
+    profile: ProfileItems
 
-
-class UsersMePut(BaseModel):
-    name: str
-    bio: str
-    skills: str
-
-
-class UsersMePutResponse(BaseModel):
-    message: str
+    model_config = ConfigDict(from_attributes=True)

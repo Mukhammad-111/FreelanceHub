@@ -18,8 +18,7 @@ async def category_create(data: CategoryCreate,
     await CategoryRepository.create(category, db)
     await db.commit()
     await db.refresh(category)
-    return {"id": category.id,
-            "name": category.name}
+    return category
 
 
 async def category_put(category_id: int, data: CategoryUpdate, db: AsyncSession):
@@ -34,7 +33,7 @@ async def category_put(category_id: int, data: CategoryUpdate, db: AsyncSession)
 
     await CategoryRepository.update(category, data, db)
     await db.commit()
-    return {"name": data.name}
+    return category
 
 
 async def category_delete(category_id: int, db: AsyncSession):

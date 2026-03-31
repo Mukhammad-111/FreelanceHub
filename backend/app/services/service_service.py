@@ -29,8 +29,7 @@ async def add_service(data_service: ServiceCreate,
     created_service = await ServiceRepository.create(new_service, db)
     await db.commit()
     await db.refresh(created_service)
-    return {"id": created_service.id,
-            "title": created_service.title}
+    return created_service
 
 async def get_all_services(limit: int, offset: int, db: AsyncSession):
     return await ServiceRepository.get_all(limit=limit, offset=offset, db=db)
@@ -40,11 +39,7 @@ async def get_one_service(service_id: int, db: AsyncSession):
     service = await ServiceRepository.get_by_id(service_id, db)
     if not service:
         raise HTTPException(status_code=404, detail=f"Service with id: '{service_id}' not found")
-    return {"id": service.id,
-            "title": service.title,
-            "price": service.price,
-            "freelancer_id": service.freelancer_id,
-            "category_id": service.category_id}
+    return service
 
 
 async def put_service(service_id: int,
@@ -63,7 +58,7 @@ async def put_service(service_id: int,
 
     await ServiceRepository.update(service, data, db)
     await db.commit()
-    return {"message": "Service updated successfully"}
+    return service
 
 
 async def delete_service(service_id: int,

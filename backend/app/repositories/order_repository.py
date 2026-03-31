@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.order import Order, OrderStatus
 
@@ -42,3 +42,10 @@ class OrderRepository:
     @staticmethod
     async def delete(order: Order, db: AsyncSession) -> None:
         await db.delete(order)
+
+
+    @staticmethod
+    async def total_orders(db: AsyncSession):
+        query = select(func.count(Order.id))
+        result = await db.execute(query)
+        return result.scalar()

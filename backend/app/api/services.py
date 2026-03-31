@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, HTTPException
 
 from app.dependencies.dependencies import get_current_user
-from app.models.user import User
+from app.models.user import User, Role
 from app.schemas.service import (ServiceCreate, ServiceResponse, ServiceIdResponse,
-                                 ServiceUpdate, ServiceUpdateResponse, ServiceDeleteResponse)
+                                 ServiceUpdate, ServiceDeleteResponse, ServiceItems)
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 
@@ -13,31 +13,36 @@ from app.services.service_service import (add_service, get_all_services, get_one
 router = APIRouter(prefix="/services", tags=["Services"])
 
 
-@router.post("/")
+@router.post("/", response_model=ServiceItems)
 async def create_service(data: ServiceCreate,
                          current_user: User = Depends(get_current_user),
-                         db: AsyncSession = Depends(get_db)) -> ServiceResponse:
+                         db: AsyncSession = Depends(get_db)):
+    if current_user.role != Role.freelancer:
+        raise HTTPException(status_code=403, detail="Only freelancer can create service")
     return await add_service(data, current_user, db)
 
 
-@router.get("/", response_model=list[ServiceResponse])
-async def get_all(limit: int,
-                  offset: int,
+@router.get("/", response_model=ServiceResponse)
+async def get_all(limit: int = Query(10, ge=1, le=10),
+                  offset: int = Query(0, ge=0, le=100),
                   db: AsyncSession = Depends(get_db),):
-    return await get_all_services(limit, offset, db)
+    services = await get_all_services(limit, offset, db)
+    return {"limit": limit,
+            "offset": offset,
+            "items": services}
 
 
-@router.get("/{service_id}")
+@router.get("/{service_id}", response_model=ServiceIdResponse)
 async def get_service(service_id: int,
-                      db: AsyncSession = Depends(get_db)) -> ServiceIdResponse:
+                      db: AsyncSession = Depends(get_db)):
     return await get_one_service(service_id, db)
 
 
-@router.put("/{service_id}")
+@router.put("/{service_id}", response_model=ServiceIdResponse)
 async def update_service(service_id: int,
                          data: ServiceUpdate,
                          current_user: User = Depends(get_current_user),
-                         db: AsyncSession = Depends(get_db)) -> ServiceUpdateResponse:
+                         db: AsyncSession = Depends(get_db)):
     return await put_service(service_id, data, current_user, db)
 
 

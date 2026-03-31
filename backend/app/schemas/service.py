@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field
+import datetime
+
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class ServiceCreate(BaseModel):
@@ -15,25 +17,40 @@ class ServiceUpdate(ServiceCreate):
     category_id: int | None = None
 
 
-class ServiceUpdateResponse(BaseModel):
+class ServiceDeleteResponse(BaseModel):
     message: str
 
+    model_config = ConfigDict(from_attributes=True)
 
-class ServiceDeleteResponse(ServiceUpdateResponse):
-    pass
+
+class ServiceItems(BaseModel):
+    id: int
+    title: str
+    price: float
+    category_id: int
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceResponse(BaseModel):
-    id: int
-    title: str
+    limit: int
+    offset: int
+    items: list[ServiceItems]
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceIdResponse(BaseModel):
     id: int
     title: str
+    description: str
     price: float
     freelancer_id: int
     category_id: int
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 

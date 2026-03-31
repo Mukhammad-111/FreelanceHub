@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.order import Order, OrderStatus
 from app.models.user import Role
+from app.repositories.category_repository import CategoryRepository
 from app.repositories.order_repository import OrderRepository
 from app.schemas.order import OrderCreate, OrderUpdate
 
@@ -12,12 +13,18 @@ STATUS_TRANSITIONS = {
     OrderStatus.OPEN: [OrderStatus.IN_PROGRESS],
     OrderStatus.IN_PROGRESS: [OrderStatus.COMPLETED],
     OrderStatus.COMPLETED: [OrderStatus.PAID],
+    OrderStatus.PAID: [OrderStatus.PAID]
 }
 
 
 async def create_order(data: OrderCreate, client_id: int, role: Role, db: AsyncSession) -> Order:
     if role != Role.client:
         raise HTTPException(status_code=403, detail="Only clients can create orders")
+
+    category = await CategoryRepository.get_by_id(data.category_id, db)
+    if category is None:
+        raise HTTPException(status_code=404, detail=f"Category with id:'{data.category_id}' not found")
+
     order = Order(**data.model_dump(), client_id=client_id, status=OrderStatus.OPEN)
     try:
         await OrderRepository.create(order, db)
@@ -44,6 +51,9 @@ async def update_order(order_id: int, data: OrderUpdate, client_id: int, db: Asy
     order = await get_order(order_id, db)
     if order.client_id != client_id:
         raise HTTPException(status_code=403, detail="Not your order")
+    category = await CategoryRepository.get_by_id(data.category_id, db)
+    if category is None:
+        raise HTTPException(status_code=404, detail="Category not found")
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(order, key, value)
     await db.commit()
@@ -59,8 +69,11 @@ async def delete_order(order_id: int, client_id: int, db: AsyncSession) -> None:
     await db.commit()
 
 
-async def change_status(order_id: int, new_status: OrderStatus, db: AsyncSession) -> Order:
+
+async def change_status(order_id: int, new_status: OrderStatus, client_id: int, db: AsyncSession) -> Order:
     order = await get_order(order_id, db)
+    if order.client_id != client_id:
+        raise HTTPException(status_code=403, detail="Not your order")
     allowed = STATUS_TRANSITIONS.get(order.status, [])
     if new_status not in allowed:
         raise HTTPException(

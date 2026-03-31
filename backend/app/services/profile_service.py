@@ -1,19 +1,17 @@
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
-from app.models.profile import Profile
-from app.schemas.profile import UsersMePut
+from app.repositories.profile_repository import ProfileRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.profile import ProfilePut
 
 
 async def get_profile(current_user: User, db: AsyncSession):
-    profile_obj = await db.execute(select(Profile).where(Profile.user_id == current_user.id))
-    user_obj = await db.execute(select(User).where(User.id == current_user.id))
-    user = user_obj.scalar_one_or_none()
-    profile = profile_obj.scalar_one_or_none()
+    user = await UserRepository.get_by_id(current_user.id, db)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    profile = await ProfileRepository.get_by_user_id(current_user.id, db)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
 
@@ -28,15 +26,25 @@ async def get_profile(current_user: User, db: AsyncSession):
             }}
 
 
-async def put_profile(data: UsersMePut,
+async def put_profile(data: ProfilePut,
                       current_user:User,
                       db: AsyncSession):
-    profile = await db.get(Profile, current_user.id)
+    user = await UserRepository.get_by_id(current_user.id, db)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await ProfileRepository.get_by_id(current_user.id, db)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
 
-    profile.name = data.name
-    profile.bio = data.bio
-    profile.skills = data.skills
+    await ProfileRepository.update(profile, data, db)
     await db.commit()
-    return {"message": "Profile updated successfully"}
+    return {"id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "profile": {
+                "name": profile.name,
+                "bio": profile.bio,
+                "skills": profile.skills,
+                "rating": profile.rating
+            }}

@@ -1,11 +1,9 @@
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.order import Order
 from app.models.response import Response, ResponseStatus
 from app.models.order import OrderStatus
 from app.models.user import User
+from app.repositories.order_repository import OrderRepository
 from app.repositories.response_repository import ResponseRepository
 from app.schemas.response import ResponseCreate
 
@@ -13,8 +11,7 @@ from app.schemas.response import ResponseCreate
 async def response_create(data: ResponseCreate,
                           current_user: User,
                           db: AsyncSession):
-    result = await db.execute(select(Order).where(Order.id == data.order_id))
-    order = result.scalar_one_or_none()
+    order = await OrderRepository.get_by_id(data.order_id, db)
     if not order:
         raise HTTPException(status_code=404, detail=f"Order with id:'{data.order_id}' not found")
 
@@ -30,21 +27,30 @@ async def response_create(data: ResponseCreate,
     return created_response
 
 
-async def response_accept(response_id: int, db: AsyncSession):
-    response = await ResponseRepository.get_by_id(response_id, db)
+async def response_accept(response_id: int, current_user: User, db: AsyncSession):
+    response = await ResponseRepository.get_by_id_with_order(response_id, db)
     if not response:
         raise HTTPException(status_code=404, detail=f"Response with id:'{response_id}' not found")
+
+    if response.order.client_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the owner of the order can accept")
+
     response.status = ResponseStatus.accepted
     response.order.status = OrderStatus.IN_PROGRESS
     await db.commit()
     return response
 
 
-async def response_reject(response_id: int, db: AsyncSession):
-    response = await ResponseRepository.get_by_id(response_id, db)
+async def response_reject(response_id: int, current_user: User, db: AsyncSession):
+    response = await ResponseRepository.get_by_id_with_order(response_id, db)
     if not response:
         raise HTTPException(status_code=404, detail=f"Response with id:'{response_id}' not found")
+
+    if response.order.client_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the owner of the order can reject")
+
     response.status = ResponseStatus.rejected
+    response.order.status = OrderStatus.OPEN
     await db.commit()
     return response
 

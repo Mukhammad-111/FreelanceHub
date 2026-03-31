@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.params import Depends
-from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -8,7 +7,7 @@ from app.db.session import get_db
 from app.schemas.user import (UserRegister, UserRegisterResponse, UserLogin, UserLoginResponse,
                               UserMeResponse, UserRefresh, UserRefreshResponse, UserLogoutResponse)
 
-from app.services.auth_service import register_user, login_user, logout_user
+from app.services.auth_service import register_user, login_user, logout_user, get_me
 
 from app.dependencies.dependencies import get_current_user
 
@@ -16,7 +15,6 @@ from app.models.user import User
 
 from app.services.auth_service import refresh_token
 
-from app.models.refresh_token import RefreshToken
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -35,12 +33,10 @@ async def login(user_data: UserLogin,
     return await login_user(user_data, db)
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserMeResponse)
 async def me(current_user: User = Depends(get_current_user),
-              db: AsyncSession = Depends(get_db)) -> UserMeResponse:
-    result = await db.execute(select(User).where(User.id == current_user.id))
-    user = result.scalar_one_or_none()
-    return user
+              db: AsyncSession = Depends(get_db)):
+    return await get_me(current_user, db)
 
 
 @router.post("/refresh")

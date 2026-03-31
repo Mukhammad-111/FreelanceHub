@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy import ForeignKey, func, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 import enum
 
 from app.db.base import Base
@@ -29,3 +29,8 @@ class Order(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime.datetime] = mapped_column(server_default=func.now(),
                                                           onupdate=func.now())
+
+    client: Mapped["User"] = relationship("User", lazy="selectin")
+    category: Mapped["Category"] = relationship("Category", lazy="selectin")
+    responses: Mapped[list["Response"]] = relationship(
+        "Response", back_populates="order", cascade="all, delete-orphan")

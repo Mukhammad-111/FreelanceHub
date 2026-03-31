@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 from app.models.payment import PaymentStatus
 
@@ -8,13 +10,19 @@ class PaymentCreate(BaseModel):
     amount: float
 
 
-class PaymentResponse(BaseModel):
-    id: int
-    status: PaymentStatus
-
-
 class PaymentResponseList(BaseModel):
     id: int
     order_id: int
     amount: float
     status: PaymentStatus
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaymentList(BaseModel):
+    limit: int
+    offset: int
+    items: list[PaymentResponseList]
+
+    model_config = ConfigDict(from_attributes=True)

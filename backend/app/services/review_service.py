@@ -19,6 +19,15 @@ async def review_create(data: ReviewCreate,
         raise HTTPException(status_code=404,
                             detail=f"Reviewed_user with id:'{data.reviewed_user_id}' not found")
 
+    order_exists = await ReviewRepository.has_completed_order_between_users(
+        current_user.id,
+        data.reviewed_user_id,
+        db
+    )
+
+    if not order_exists:
+        raise HTTPException(403, "No completed order between users")
+
     new_review = Review(
         reviewer_id=current_user.id,
         reviewed_user_id=data.reviewed_user_id,
