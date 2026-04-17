@@ -3,6 +3,13 @@ import datetime
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class FreelancerInfo(BaseModel):
+    id: int
+    name: str | None = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ServiceCreate(BaseModel):
     title: str
     description: str
@@ -28,6 +35,8 @@ class ServiceItems(BaseModel):
     title: str
     price: float
     category_id: int
+    freelancer_id: int | None = None
+    freelancer: FreelancerInfo | None = None
     created_at: datetime.datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -47,6 +56,7 @@ class ServiceIdResponse(BaseModel):
     description: str
     price: float
     freelancer_id: int
+    freelancer: FreelancerInfo | None = None
     category_id: int
     created_at: datetime.datetime
 

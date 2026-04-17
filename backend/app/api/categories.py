@@ -41,7 +41,7 @@ async def delete_category(category_id: int,
 
 
 @router.get("/", response_model=CategoryList)
-async def get_all(limit: int = Query(10, ge=1, le=10),
+async def get_all(limit: int = Query(50, ge=1, le=100),
                   offset: int = Query(0, ge=0, le=100),
                   db: AsyncSession = Depends(get_db)):
     categories = await get_all_categories(limit, offset, db)

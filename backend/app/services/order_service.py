@@ -19,11 +19,11 @@ STATUS_TRANSITIONS = {
 
 async def create_order(data: OrderCreate, client_id: int, role: Role, db: AsyncSession) -> Order:
     if role != Role.client:
-        raise HTTPException(status_code=403, detail="Only clients can create orders")
+        raise HTTPException(status_code=403, detail="Только заказчики могут создавать заказы")
 
     category = await CategoryRepository.get_by_id(data.category_id, db)
     if category is None:
-        raise HTTPException(status_code=404, detail=f"Category with id:'{data.category_id}' not found")
+        raise HTTPException(status_code=404, detail=f"Категория с id:'{data.category_id}' не найдена")
 
     order = Order(**data.model_dump(), client_id=client_id, status=OrderStatus.OPEN)
     try:

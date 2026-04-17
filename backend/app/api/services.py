@@ -13,12 +13,12 @@ from app.services.service_service import (add_service, get_all_services, get_one
 router = APIRouter(prefix="/services", tags=["Services"])
 
 
-@router.post("/", response_model=ServiceItems)
+@router.post("/", response_model=ServiceIdResponse)
 async def create_service(data: ServiceCreate,
                          current_user: User = Depends(get_current_user),
                          db: AsyncSession = Depends(get_db)):
     if current_user.role != Role.freelancer:
-        raise HTTPException(status_code=403, detail="Only freelancer can create service")
+        raise HTTPException(status_code=403, detail="Только исполнители могут создавать услуги")
     return await add_service(data, current_user, db)
 
 
