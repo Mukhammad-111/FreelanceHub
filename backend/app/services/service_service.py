@@ -9,6 +9,30 @@ from app.models.service import Service
 from app.models.user import User
 
 from app.models.category import Category
+from app.models.profile import Profile
+
+
+async def _attach_freelancer_names(services: list[Service], db: AsyncSession):
+    freelancer_ids = [service.freelancer_id for service in services if service.freelancer_id]
+    if not freelancer_ids:
+        return services
+
+    profiles_result = await db.execute(
+        select(Profile.user_id, Profile.name).where(Profile.user_id.in_(freelancer_ids))
+    )
+    profile_name_map = {user_id: name for user_id, name in profiles_result.all()}
+    users_result = await db.execute(
+        select(User.id, User.email).where(User.id.in_(freelancer_ids))
+    )
+    email_map = {user_id: email for user_id, email in users_result.all()}
+
+    for service in services:
+        display_name = profile_name_map.get(service.freelancer_id) or email_map.get(service.freelancer_id)
+        setattr(service, "freelancer_name", display_name)
+        if service.freelancer is not None:
+            service.freelancer.name = profile_name_map.get(service.freelancer_id)
+            service.freelancer.email = email_map.get(service.freelancer_id)
+    return services
 
 
 async def add_service(data_service: ServiceCreate,
@@ -31,14 +55,21 @@ async def add_service(data_service: ServiceCreate,
     await db.refresh(created_service)
     return created_service
 
-async def get_all_services(limit: int, offset: int, db: AsyncSession):
-    return await ServiceRepository.get_all(limit=limit, offset=offset, db=db)
+async def get_all_services(limit: int, offset: int, db: AsyncSession, category_id: int | None = None):
+    services = await ServiceRepository.get_all_filtered(
+        limit=limit,
+        offset=offset,
+        db=db,
+        category_id=category_id,
+    )
+    return await _attach_freelancer_names(services, db)
 
 
 async def get_one_service(service_id: int, db: AsyncSession):
     service = await ServiceRepository.get_by_id(service_id, db)
     if not service:
         raise HTTPException(status_code=404, detail=f"Service with id: '{service_id}' not found")
+    await _attach_freelancer_names([service], db)
     return service
 
 

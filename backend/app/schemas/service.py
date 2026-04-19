@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, ConfigDict
 class FreelancerInfo(BaseModel):
     id: int
     name: str | None = None
+    email: str | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -33,9 +34,11 @@ class ServiceDeleteResponse(BaseModel):
 class ServiceItems(BaseModel):
     id: int
     title: str
+    description: str
     price: float
     category_id: int
     freelancer_id: int | None = None
+    freelancer_name: str | None = None
     freelancer: FreelancerInfo | None = None
     created_at: datetime.datetime
 
@@ -56,6 +59,7 @@ class ServiceIdResponse(BaseModel):
     description: str
     price: float
     freelancer_id: int
+    freelancer_name: str | None = None
     freelancer: FreelancerInfo | None = None
     category_id: int
     created_at: datetime.datetime

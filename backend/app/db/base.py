@@ -14,8 +14,3 @@ new_session = async_sessionmaker(engine, expire_on_commit=False, autoflush=False
 
 class Base(DeclarativeBase):
     pass
-
-
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)

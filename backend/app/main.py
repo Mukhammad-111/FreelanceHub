@@ -1,7 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from app.db.base import init_db
 from app.api.auth import router as auth_router
 from app.api.profiles import router as profiles_router
 from app.api.services import router as services_router
@@ -11,16 +8,11 @@ from app.api.reviews import router as reviews_router
 from app.api.orders import router as orders_router
 from app.api.payments import router as payments_router
 from app.api.admin import router as admin_router
+from fastapi.middleware.cors import CORSMiddleware
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    yield
+app = FastAPI(title="FreelanceHub API",)
 
-
-app = FastAPI(title="FreelanceHub API",
-              lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

@@ -25,8 +25,9 @@ async def create_service(data: ServiceCreate,
 @router.get("/", response_model=ServiceResponse)
 async def get_all(limit: int = Query(10, ge=1, le=10),
                   offset: int = Query(0, ge=0, le=100),
+                  category_id: int | None = Query(None, ge=1),
                   db: AsyncSession = Depends(get_db),):
-    services = await get_all_services(limit, offset, db)
+    services = await get_all_services(limit, offset, db, category_id)
     return {"limit": limit,
             "offset": offset,
             "items": services}
