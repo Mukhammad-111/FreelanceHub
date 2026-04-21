@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { servicesApi, categoriesApi } from "@/lib/services";
+import { servicesApi, categoriesApi, chatsApi } from "@/lib/services";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageLoader } from "@/components/Common";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { apiError } from "@/lib/api";
 import { formatKGS } from "@/components/StatusBadges";
-import { Edit, Trash2, ArrowLeft, Save, X, LayoutGrid, User } from "lucide-react";
+import { Edit, Trash2, ArrowLeft, Save, X, LayoutGrid, User, MessageSquare } from "lucide-react";
+import { ProfileGuard, useProfileCompleteness } from "@/components/ProfileGuard";
 
 const ServiceDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +49,22 @@ const ServiceDetail = () => {
       toast.success("Услуга удалена");
       navigate("/services");
       qc.invalidateQueries({ queryKey: ["services"] });
+    },
+    onError: (e) => toast.error(apiError(e)),
+  });
+  
+  const { isProfileComplete } = useProfileCompleteness();
+  
+  const startChat = useMutation({
+    mutationFn: () => {
+      if (!isProfileComplete) {
+        toast.error("Пожалуйста, сначала заполните профиль (имя, о себе и навыки)");
+        throw new Error("Profile incomplete");
+      }
+      return chatsApi.startChat(service!.freelancer_id);
+    },
+    onSuccess: (chat) => {
+      navigate(`/chats/${chat.id}`);
     },
     onError: (e) => toast.error(apiError(e)),
   });
@@ -130,24 +147,38 @@ const ServiceDetail = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-wrap justify-between items-start gap-4">
-              <div className="space-y-2 max-w-2xl">
-                <div className="flex items-center gap-2 text-primary font-medium text-sm">
-                  <LayoutGrid className="h-4 w-4" /> {service.category?.name || "Без категории"}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-6 mb-8">
+              <div className="space-y-4 flex-1">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
+                    <LayoutGrid className="h-3 w-3" /> 
+                    {service.category?.name || categories.find(c => Number(c.id) === Number(service.category_id))?.name || "Без категории"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
+                    Услуга #{service.id}
+                  </span>
                 </div>
-                <h1 className="text-3xl font-bold">{service.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-foreground">{service.title}</h1>
               </div>
-              <div className="text-3xl font-bold text-primary">{formatKGS(service.price)}</div>
+              <div className="shrink-0 bg-primary/5 p-4 rounded-2xl border border-primary/10 text-right">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Стоимость</div>
+                <div className="text-3xl font-black text-primary leading-none">{formatKGS(service.price)}</div>
+              </div>
             </div>
 
-            <div className="flex items-center gap-6 py-4 border-y border-border/60">
-              <div className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
-                  <User className="h-5 w-5 text-muted-foreground" />
+            <div 
+              className="flex items-center gap-6 py-4 border-y border-border/60 cursor-pointer hover:bg-secondary/20 transition-colors group"
+              onClick={() => navigate(`/profile/${service.freelancer_id}`)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-primary text-primary-foreground flex items-center justify-center font-bold shadow-glow">
+                  {(service.freelancer?.name || service.freelancer?.email || "F")[0].toUpperCase()}
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Исполнитель</div>
-                  <div className="font-medium">{service.freelancer?.name || service.freelancer?.email || "Исполнитель"}</div>
+                  <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Исполнитель</div>
+                  <div className="font-bold text-lg group-hover:text-primary transition-colors">
+                    {service.freelancer?.name || service.freelancer?.email || "Исполнитель"}
+                  </div>
                 </div>
               </div>
             </div>
@@ -168,6 +199,20 @@ const ServiceDetail = () => {
                 }} className="rounded-full">
                   <Trash2 className="h-4 w-4 mr-2" /> Удалить
                 </Button>
+              </div>
+            )}
+
+            {!isOwner && user?.role === "client" && (
+              <div className="pt-8">
+                <ProfileGuard variant="inline" message="Пожалуйста, заполните свой профиль (имя, о себе и навыки), чтобы написать исполнителю этой услуги.">
+                  <Button 
+                    onClick={() => startChat.mutate()} 
+                    disabled={startChat.isPending} 
+                    className="rounded-full bg-gradient-primary shadow-glow px-8 h-12 font-bold text-lg"
+                  >
+                    <MessageSquare className="h-5 w-5 mr-2" /> Написать исполнителю
+                  </Button>
+                </ProfileGuard>
               </div>
             )}
           </div>

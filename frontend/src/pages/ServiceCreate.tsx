@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { apiError } from "@/lib/api";
 import { Loader2 } from "lucide-react";
+import { ProfileGuard } from "@/components/ProfileGuard";
 
 const ServiceCreate = () => {
   const navigate = useNavigate();
@@ -29,38 +30,40 @@ const ServiceCreate = () => {
   });
 
   return (
-    <div className="container-app py-10 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Новая услуга</h1>
-      <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="card-elevated p-8 space-y-5">
-        <div className="space-y-2">
-          <Label>Название</Label>
-          <Input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Создам сайт на FastAPI" />
-        </div>
-        <div className="space-y-2">
-          <Label>Описание</Label>
-          <Textarea required value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-32" />
-        </div>
-        <div className="grid sm:grid-cols-2 gap-4">
+    <ProfileGuard message="Для того чтобы начать предлагать свои услуги, пожалуйста, заполните информацию о себе в профиле (имя, краткая биография и ваши профессиональные навыки).">
+      <div className="container-app py-10 max-w-2xl">
+        <h1 className="text-3xl font-bold mb-6">Новая услуга</h1>
+        <form onSubmit={(e) => { e.preventDefault(); create.mutate(); }} className="card-elevated p-8 space-y-5">
           <div className="space-y-2">
-            <Label>Цена (KGS)</Label>
-            <Input type="number" required min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+            <Label>Название</Label>
+            <Input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Создам сайт на FastAPI" />
           </div>
           <div className="space-y-2">
-            <Label>Категория</Label>
-            <Select value={categoryId} onValueChange={setCategoryId} required>
-              <SelectTrigger><SelectValue placeholder="Выберите" /></SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Label>Описание</Label>
+            <Textarea required value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-32" />
           </div>
-        </div>
-        <Button type="submit" disabled={create.isPending || !categoryId} className="w-full rounded-full bg-gradient-primary shadow-glow">
-          {create.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-          Опубликовать
-        </Button>
-      </form>
-    </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Цена (KGS)</Label>
+              <Input type="number" required min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Категория</Label>
+              <Select value={categoryId} onValueChange={setCategoryId} required>
+                <SelectTrigger><SelectValue placeholder="Выберите" /></SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <Button type="submit" disabled={create.isPending || !categoryId} className="w-full rounded-full bg-gradient-primary shadow-glow">
+            {create.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            Опубликовать
+          </Button>
+        </form>
+      </div>
+    </ProfileGuard>
   );
 };
 

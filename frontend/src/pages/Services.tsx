@@ -65,7 +65,9 @@ const Services = () => {
               <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-1">{s.description}</p>
               <div className="flex justify-between items-center mt-5 pt-4 border-t border-border/60">
                 <div className="text-xl font-bold text-primary">{formatKGS(s.price)}</div>
-                {s.category && <div className="text-xs text-muted-foreground">{s.category.name}</div>}
+                <div className="text-xs font-bold px-2 py-1 bg-secondary/50 rounded-md text-muted-foreground">
+                  {s.category?.name || categories.find(c => c.id === s.category_id)?.name || "Без категории"}
+                </div>
               </div>
             </Link>
           ))}

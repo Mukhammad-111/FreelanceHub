@@ -10,7 +10,6 @@ import { formatKGS, OrderStatusBadge } from "@/components/StatusBadges";
 import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
-  { icon: Search, title: "Найти специалиста", text: "Каталог услуг и фрилансеров с фильтрами по категориям и цене." },
   { icon: Briefcase, title: "Публиковать заказы", text: "Описывайте задачу, получайте отклики и выбирайте лучших." },
   { icon: ShieldCheck, title: "Прозрачные сделки", text: "JWT-авторизация, ролевая модель и контроль каждого шага." },
   { icon: Wallet, title: "Учёт оплаты", text: "Внутренняя система платежей в сомах (KGS) — без сложностей." },
@@ -81,13 +80,13 @@ const Index = () => {
                   { id: 0, title: "Дизайн мобильного приложения", budget: 40000, status: "OPEN" as const, description: "" },
                   { id: 0, title: "Текст для landing page", budget: 8000, status: "IN_PROGRESS" as const, description: "" },
                 ]).map((o, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-secondary/60">
+                  <Link to={o.id ? `/orders/${o.id}` : "/orders"} key={i} className="flex items-center justify-between p-3 rounded-xl bg-secondary/60 hover:bg-secondary/80 transition-all group">
                     <div>
-                      <div className="font-medium text-sm">{o.title}</div>
+                      <div className="font-medium text-sm group-hover:text-primary transition-colors">{o.title}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">{formatKGS(o.budget)}</div>
                     </div>
                     <OrderStatusBadge status={o.status} />
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -162,6 +161,9 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{s.description}</p>
                 <div className="flex justify-between items-center mt-4">
                   <div className="font-semibold text-primary">{formatKGS(s.price)}</div>
+                  <div className="text-[10px] font-bold px-2 py-0.5 bg-secondary/50 rounded text-muted-foreground uppercase tracking-widest">
+                    {s.category?.name || categories.find(c => c.id === s.category_id)?.name || "Услуга"}
+                  </div>
                 </div>
               </Link>
             ))}

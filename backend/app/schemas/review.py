@@ -12,6 +12,7 @@ class ReviewCreate(BaseModel):
 class ReviewsList(BaseModel):
     id: int
     reviewed_user_id: int
+    reviewer_id: int
     rating: int
     comment: str
     created_at: datetime

@@ -1,7 +1,7 @@
 import { api } from "./api";
 import {
   Order, Service, Category, OrderResponse, Review, Payment,
-  Profile, OrderStatus, AdminStats, User,
+  Profile, OrderStatus, AdminStats, User, Chat, Message,
 } from "./types";
 
 // Categories
@@ -77,10 +77,35 @@ export const adminApi = {
   makeAdmin: (id: number) => api.patch(`/admin/users/${id}/make-admin`).then(r => r.data),
 };
 
+// Users
+export const usersApi = {
+  get: (id: number) => api.get<Profile>(`/users/${id}`).then(r => r.data),
+};
+
+// Chats
+export const chatsApi = {
+  list: (): Promise<Chat[]> => api.get("/chats/my_chats").then(r => normalizeList<Chat>(r.data)),
+  get: (id: number) => api.get<Chat>(`/chats/${id}`).then(r => r.data),
+  messages: (chatId: number): Promise<Message[]> => 
+    api.get(`/chats/${chatId}/messages`).then(r => normalizeList<Message>(r.data)),
+  sendMessage: (chatId: number, text: string) => 
+    api.post<Message>("/message/", { chat_id: chatId, text }).then(r => r.data),
+  startChat: (freelancerId: number) => 
+    api.post<Chat>(`/chats/start?freelancer_id=${freelancerId}`).then(r => r.data),
+};
+
 function normalizeList<T>(data: any): T[] {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.results)) return data.results;
   if (Array.isArray(data?.data)) return data.data;
+  
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    // Search for the first array property in the object
+    const values = Object.values(data);
+    const firstArray = values.find(v => Array.isArray(v));
+    if (firstArray) return firstArray as T[];
+  }
+  
   return [];
 }

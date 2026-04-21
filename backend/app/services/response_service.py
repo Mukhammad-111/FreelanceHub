@@ -1,8 +1,13 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.chat import Chat
+from app.models.message import Message
 from app.models.response import Response, ResponseStatus
 from app.models.order import OrderStatus
 from app.models.user import User
+from app.repositories.chat import ChatRepository
+from app.repositories.message import MessageRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.response_repository import ResponseRepository
 from app.schemas.response import ResponseCreate
@@ -37,6 +42,19 @@ async def response_accept(response_id: int, current_user: User, db: AsyncSession
 
     response.status = ResponseStatus.accepted
     response.order.status = OrderStatus.IN_PROGRESS
+
+    chat = Chat(
+        client_id=response.order.client_id,
+        freelancer_id=response.freelancer_id,
+        orders_id=response.order_id
+    )
+    await ChatRepository.create(chat, db)
+    await db.flush()
+    await db.refresh(chat)
+
+    if current_user.id not in [chat.client_id, chat.freelancer_id]:
+        raise HTTPException(status_code=403, detail="No access")
+
     await db.commit()
     return response
 

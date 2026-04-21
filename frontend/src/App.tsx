@@ -23,6 +23,8 @@ import Payments from "./pages/Payments";
 import Admin from "./pages/Admin";
 import Dashboard from "./pages/Dashboard";
 import AdminCategories from "./pages/AdminCategories";
+import CandidateProfile from "./pages/CandidateProfile";
+import Chats from "./pages/Chats";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -58,6 +60,9 @@ const App = () => (
               <Route path="/profile" element={
                 <ProtectedRoute><Profile /></ProtectedRoute>
               } />
+              <Route path="/profile/:id" element={<CandidateProfile />} />
+              <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
+              <Route path="/chats/:id" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
               <Route path="/payments" element={
                 <ProtectedRoute><Payments /></ProtectedRoute>
               } />

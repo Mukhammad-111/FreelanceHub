@@ -9,12 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { PageLoader } from "@/components/Common";
 import { toast } from "sonner";
 import { apiError } from "@/lib/api";
-import { Loader2, Star, User } from "lucide-react";
+import { Star, User, AlertCircle, Loader2 } from "lucide-react";
+import { ReviewItem } from "@/components/ReviewItem";
+import { useProfileCompleteness } from "@/components/ProfileRequirementGuard";
 
 const Profile = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: profile, isLoading } = useQuery({ queryKey: ["profile", "me"], queryFn: profilesApi.me });
+  const { isComplete } = useProfileCompleteness();
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", user?.id], queryFn: () => reviewsApi.byUser(user!.id), enabled: !!user,
   });
@@ -45,6 +48,14 @@ const Profile = () => {
 
   return (
     <div className="container-app py-10 max-w-4xl space-y-6">
+      {!isComplete && !isLoading && (
+        <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
+          <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+          <p className="text-sm font-medium text-warning-foreground">
+            Ваш профиль не заполнен. Пожалуйста, укажите имя, информацию о себе и навыки, чтобы иметь возможность откликаться на заказы и услуги.
+          </p>
+        </div>
+      )}
       <div className="card-elevated p-8">
         <div className="flex flex-wrap gap-6 items-center">
           <div className="h-20 w-20 rounded-2xl bg-gradient-primary text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-glow">
@@ -89,15 +100,7 @@ const Profile = () => {
           <h2 className="text-xl font-semibold mb-4">Отзывы</h2>
           <div className="space-y-4">
             {reviews.map((r) => (
-              <div key={r.id} className="rounded-xl bg-secondary/50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center"><User className="h-4 w-4" /></div>
-                  <div className="flex">{[1,2,3,4,5].map((n) => (
-                    <Star key={n} className={`h-4 w-4 ${n <= r.rating ? "fill-warning text-warning" : "text-muted-foreground"}`} />
-                  ))}</div>
-                </div>
-                <p className="text-sm">{r.comment}</p>
-              </div>
+              <ReviewItem key={r.id} review={r} />
             ))}
           </div>
         </div>

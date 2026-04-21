@@ -8,6 +8,8 @@ from app.models.refresh_token import RefreshToken
 from app.models.response import Response
 from app.models.category import Category
 from app.models.payment import Payment
+from app.models.chat import Chat
+from app.models.message import Message
 
 
 all = [
@@ -21,4 +23,6 @@ all = [
     "Response",
     "Category",
     "Payment",
+    "Chat",
+    "Message",
 ]

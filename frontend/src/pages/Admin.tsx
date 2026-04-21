@@ -74,42 +74,94 @@ const Admin = () => {
 
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Управление пользователями</h2>
-        <div className="card-elevated p-0 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-secondary/60 text-sm">
-              <tr>
-                <th className="text-left p-4 font-medium">ID</th>
-                <th className="text-left p-4 font-medium">Имя / Email</th>
-                <th className="text-left p-4 font-medium">Роль</th>
-                <th className="text-left p-4 font-medium">Статус</th>
-                <th className="text-right p-4 font-medium">Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id} className="border-t border-border/60">
-                  <td className="p-4 font-mono text-sm">#{u.id}</td>
-                  <td className="p-4">
-                    <div className="font-medium">{u.name || "—"}</div>
+        
+        {/* Mobile List View */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {users.map((u) => (
+            <div key={u.id} className="card-soft p-5 space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                    {(u.name || u.email)[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-bold">{u.name || "—"}</div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
-                  </td>
-                  <td className="p-4"><Badge variant="outline" className="capitalize">{u.role}</Badge></td>
-                  <td className="p-4">
-                    {u.is_active === false ? <Badge className="bg-destructive text-destructive-foreground">Заблокирован</Badge> : <Badge className="bg-emerald-100 text-emerald-700 border-0">Активен</Badge>}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => block.mutate(u.id)}><Ban className="h-4 w-4" /></Button>
-                      {u.role !== "admin" && (
-                        <Button size="sm" variant="ghost" onClick={() => makeAdmin.mutate(u.id)}><ShieldCheck className="h-4 w-4" /></Button>
-                      )}
-                      <Button size="sm" variant="ghost" onClick={() => removeUser.mutate(u.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </div>
-                  </td>
+                  </div>
+                </div>
+                <Badge variant="outline" className="capitalize">{u.role}</Badge>
+              </div>
+              
+              <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-mono">#{u.id}</span>
+                  {u.is_active === false ? (
+                    <Badge className="bg-destructive text-destructive-foreground text-[10px]">Заблокирован</Badge>
+                  ) : (
+                    <Badge className="bg-emerald-100 text-emerald-700 border-0 text-[10px]">Активен</Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => block.mutate(u.id)} className="h-8 w-8 p-0">
+                    <Ban className="h-4 w-4" />
+                  </Button>
+                  {u.role !== "admin" && (
+                    <Button size="sm" variant="secondary" onClick={() => makeAdmin.mutate(u.id)} className="h-8 w-8 p-0">
+                      <ShieldCheck className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {u.role !== "admin" && (
+                    <Button size="sm" variant="destructive" onClick={() => removeUser.mutate(u.id)} className="h-8 w-8 p-0">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block card-elevated p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-secondary/60 text-sm">
+                <tr>
+                  <th className="text-left p-4 font-medium">ID</th>
+                  <th className="text-left p-4 font-medium">Имя / Email</th>
+                  <th className="text-left p-4 font-medium">Роль</th>
+                  <th className="text-left p-4 font-medium">Статус</th>
+                  <th className="text-right p-4 font-medium">Действия</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-t border-border/60">
+                    <td className="p-4 font-mono text-sm">#{u.id}</td>
+                    <td className="p-4">
+                      <div className="font-medium">{u.name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{u.email}</div>
+                    </td>
+                    <td className="p-4"><Badge variant="outline" className="capitalize">{u.role}</Badge></td>
+                    <td className="p-4">
+                      {u.is_active === false ? <Badge className="bg-destructive text-destructive-foreground">Заблокирован</Badge> : <Badge className="bg-emerald-100 text-emerald-700 border-0">Активен</Badge>}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => block.mutate(u.id)} title="Заблокировать"><Ban className="h-4 w-4" /></Button>
+                        {u.role !== "admin" && (
+                          <Button size="sm" variant="ghost" onClick={() => makeAdmin.mutate(u.id)} title="Сделать админом"><ShieldCheck className="h-4 w-4" /></Button>
+                        )}
+                        {u.role !== "admin" && (
+                          <Button size="sm" variant="ghost" onClick={() => removeUser.mutate(u.id)} title="Удалить"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

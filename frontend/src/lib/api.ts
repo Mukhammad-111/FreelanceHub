@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-export const API_BASE_URL = "http://192.168.50.113:8000";
+export const API_BASE_URL = "http://0.0.0.0:8001";
 
 const ACCESS_KEY = "fh_access_token";
 const REFRESH_KEY = "fh_refresh_token";

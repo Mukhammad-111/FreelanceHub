@@ -38,6 +38,7 @@ const Layout = () => {
     { to: "/orders", icon: Briefcase, label: "Заказы" },
     { to: "/services", icon: LayoutGrid, label: "Услуги" },
     ...(user ? [{ to: "/dashboard", icon: ListChecks, label: "Дашборд" }] : []),
+    ...(user ? [{ to: "/chats", icon: MessageSquare, label: "Сообщения" }] : []),
     ...(user ? [{ to: "/payments", icon: CreditCard, label: "Платежи" }] : []),
     ...(user?.role === "admin" ? [{ to: "/admin", icon: Shield, label: "Админ" }] : []),
   ];

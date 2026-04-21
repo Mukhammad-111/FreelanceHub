@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from app.api.auth import router as auth_router
+from app.api.user import router as users_router
 from app.api.profiles import router as profiles_router
 from app.api.services import router as services_router
 from app.api.categories import router as categories_router
 from app.api.responses import router as responses_router
+from app.api.message import router as message_router
+from app.api.chat import router as chat_router
 from app.api.reviews import router as reviews_router
 from app.api.orders import router as orders_router
 from app.api.payments import router as payments_router
@@ -23,11 +26,14 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(orders_router)
 app.include_router(services_router)
 app.include_router(categories_router)
 app.include_router(responses_router)
+app.include_router(message_router)
+app.include_router(chat_router)
 app.include_router(reviews_router)
 app.include_router(payments_router)
 app.include_router(admin_router)

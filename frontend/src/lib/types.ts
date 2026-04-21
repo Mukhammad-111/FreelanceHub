@@ -1,5 +1,5 @@
 export type Role = "client" | "freelancer" | "admin";
-export type OrderStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "PAID";
+export type OrderStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "PAID" | "CONFIRMED_PAID";
 export type ResponseStatus = "pending" | "accepted" | "rejected";
 export type PaymentStatus = "pending" | "paid";
 
@@ -97,4 +97,24 @@ export interface AdminStats {
   orders_total: number;
   services_total: number;
   payments_total: number;
+}
+
+export interface Chat {
+  id: number;
+  orders_id: number;
+  client_id: number;
+  freelancer_id: number;
+  created_at: string;
+  order?: Order;
+  client?: User;
+  freelancer?: User;
+  last_message?: Message;
+}
+
+export interface Message {
+  id: number;
+  chat_id: number;
+  sender_id: number;
+  text: string;
+  created_at: string;
 }
