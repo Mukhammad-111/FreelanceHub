@@ -13,15 +13,34 @@ const Dashboard = () => {
   const isFreelancer = user?.role === "freelancer";
 
   const { data: myOrders = [], isLoading: l1 } = useQuery({
-    queryKey: ["orders", "my"],
-    queryFn: () => ordersApi.list({ status: "OPEN" }), // Simulating 'my' by filter or just generic list
-    enabled: isClient,
+    queryKey: ["orders", "my-detailed", user?.id],
+    queryFn: async () => {
+      const list = await ordersApi.list();
+      // Fetch full details for each order to check client_id (Frontend-only workaround)
+      const detailed = await Promise.all(
+        list.slice(0, 20).map(async (o) => {
+          try {
+            return await ordersApi.get(o.id);
+          } catch {
+            return o;
+          }
+        })
+      );
+      return detailed.filter(o => String(o.client_id || (o as any).client?.id) === String(user?.id));
+    },
+    enabled: !!user && isClient,
   });
 
-  const { data: myResponses = [], isLoading: l2 } = useQuery({
+  const { data: allResponses = [], isLoading: l2 } = useQuery({
     queryKey: ["responses", "my"],
     queryFn: responsesApi.list,
     enabled: isFreelancer,
+  });
+
+  
+  const myResponses = allResponses.filter(r => {
+    const fid = r.freelancer_id || r.freelancer?.id || (r.freelancer as any)?.id;
+    return fid && user?.id && String(fid) === String(user.id);
   });
 
   if (l1 || l2) return <PageLoader />;

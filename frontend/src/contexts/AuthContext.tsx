@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { api, tokenStorage, apiError } from "@/lib/api";
+import { profilesApi } from "@/lib/services";
 import { Role, User } from "@/lib/types";
 
 interface AuthContextValue {
@@ -52,6 +53,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await api.post("/auth/register", payload);
       await login(payload.email, payload.password);
+      // Автоматически заполняем имя в профиле после регистрации
+      await profilesApi.update({ name: payload.name, bio: "", skills: "" });
+      await fetchMe();
     } catch (e) {
       throw new Error(apiError(e));
     }

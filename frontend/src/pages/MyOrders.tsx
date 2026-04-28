@@ -9,8 +9,23 @@ import { Plus } from "lucide-react";
 
 const MyOrders = () => {
   const { user } = useAuth();
-  const { data: orders = [], isLoading } = useQuery({ queryKey: ["orders", "mine"], queryFn: () => ordersApi.list() });
-  const mine = orders.filter((o) => o.client_id === user?.id);
+  const { data: mine = [], isLoading } = useQuery({
+    queryKey: ["orders", "mine-detailed", user?.id],
+    queryFn: async () => {
+      const list = await ordersApi.list();
+      const detailed = await Promise.all(
+        list.map(async (o) => {
+          try {
+            return await ordersApi.get(o.id);
+          } catch {
+            return o;
+          }
+        })
+      );
+      return detailed.filter(o => String(o.client_id || (o as any).client?.id) === String(user?.id));
+    },
+    enabled: !!user
+  });
 
   return (
     <div className="container-app py-10">

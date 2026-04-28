@@ -7,8 +7,11 @@ import { PageLoader, EmptyState } from "@/components/Common";
 
 const MyResponses = () => {
   const { user } = useAuth();
-  const { data: responses = [], isLoading } = useQuery({ queryKey: ["responses"], queryFn: responsesApi.list });
-  const mine = responses.filter((r) => r.freelancer_id === user?.id);
+  const { data: allResponses = [], isLoading } = useQuery({ queryKey: ["responses"], queryFn: responsesApi.list });
+  const mine = allResponses.filter((r) => {
+    const fid = r.freelancer_id || r.freelancer?.id;
+    return fid && user?.id && String(fid) === String(user.id);
+  });
 
   return (
     <div className="container-app py-10">

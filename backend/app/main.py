@@ -19,7 +19,7 @@ app = FastAPI(title="FreelanceHub API",)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://freelancehub-api.softjol.site"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
