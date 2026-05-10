@@ -11,13 +11,13 @@ import { toast } from "sonner";
 import { apiError } from "@/lib/api";
 import { Star, User, AlertCircle, Loader2 } from "lucide-react";
 import { ReviewItem } from "@/components/ReviewItem";
-import { useProfileCompleteness } from "@/components/ProfileRequirementGuard";
+import { useProfileCompleteness } from "@/components/ProfileGuard";
 
 const Profile = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: profile, isLoading } = useQuery({ queryKey: ["profile", "me"], queryFn: profilesApi.me });
-  const { isComplete } = useProfileCompleteness();
+  const { isProfileComplete, isNameComplete, isBioComplete, isSkillsComplete } = useProfileCompleteness();
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", user?.id], queryFn: () => reviewsApi.byUser(user!.id), enabled: !!user,
   });
@@ -38,7 +38,10 @@ const Profile = () => {
     mutationFn: () => profilesApi.update({
       name, bio: description, skills,
     }),
-    onSuccess: () => { toast.success("Профиль обновлён"); qc.invalidateQueries({ queryKey: ["profile"] }); },
+    onSuccess: () => {
+      toast.success("Профиль обновлён");
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
     onError: (e) => toast.error(apiError(e)),
   });
 
@@ -47,17 +50,27 @@ const Profile = () => {
   const avg = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   return (
-    <div className="container-app py-10 max-w-4xl space-y-6">
-      {!isComplete && !isLoading && (
-        <div className="bg-warning/10 border border-warning/20 p-4 rounded-2xl flex items-center gap-3 animate-pulse">
-          <AlertCircle className="h-5 w-5 text-warning shrink-0" />
-          <p className="text-sm font-medium text-warning-foreground">
-            Ваш профиль не заполнен. Пожалуйста, укажите имя, информацию о себе и навыки, чтобы иметь возможность откликаться на заказы и услуги.
-          </p>
+    <div className="container-app py-6 sm:py-10 max-w-4xl space-y-6">
+      {!isProfileComplete && !isLoading && (
+        <div className="bg-warning/10 border border-warning/20 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+          <AlertCircle className="h-6 w-6 text-warning shrink-0" />
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-warning-foreground">
+              Профиль не заполнен полностью
+            </p>
+            <p className="text-xs sm:text-sm text-warning-foreground/80 leading-relaxed">
+              Пожалуйста, укажите {!isNameComplete && "имя (минимум 2 симв.)"}{!isNameComplete && (!isBioComplete || (!isSkillsComplete && user?.role === 'freelancer')) ? ", " : ""}
+              {!isBioComplete && "информацию о себе (минимум 10 симв.)"}
+              {!isBioComplete && (!isSkillsComplete && user?.role === 'freelancer') ? " и " : ""}
+              {!isSkillsComplete && user?.role === 'freelancer' && "навыки"}
+              , чтобы получить полный доступ к функциям платформы.
+            </p>
+          </div>
         </div>
       )}
-      <div className="card-elevated p-8">
-        <div className="flex flex-wrap gap-6 items-center">
+
+      <div className="card-elevated p-5 sm:p-8">
+        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start text-center sm:text-left">
           <div className="h-20 w-20 rounded-2xl bg-gradient-primary text-primary-foreground flex items-center justify-center text-3xl font-bold shadow-glow">
             {(name || user?.email || "U")[0]?.toUpperCase()}
           </div>
@@ -65,7 +78,7 @@ const Profile = () => {
             <h1 className="text-2xl font-bold">{name || user?.email}</h1>
             <div className="text-muted-foreground capitalize text-sm">{user?.role} • {user?.email}</div>
             {reviews.length > 0 && (
-              <div className="flex items-center gap-1 mt-2">
+              <div className="flex items-center justify-center sm:justify-start gap-1 mt-2">
                 <Star className="h-4 w-4 fill-warning text-warning" />
                 <span className="font-semibold">{avg.toFixed(1)}</span>
                 <span className="text-sm text-muted-foreground">({reviews.length} отзывов)</span>
@@ -75,28 +88,40 @@ const Profile = () => {
         </div>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="card-soft p-8 space-y-5">
+      <form onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="card-soft p-5 sm:p-8 space-y-5">
         <h2 className="text-xl font-semibold">Редактировать профиль</h2>
         <div className="space-y-2">
           <Label>Имя</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ваше имя" />
         </div>
         <div className="space-y-2">
           <Label>О себе</Label>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-28" placeholder="Расскажите о своём опыте..." />
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="min-h-28"
+            placeholder="Расскажите о своём опыте (минимум 10 символов)..."
+          />
         </div>
         <div className="space-y-2">
           <Label>Навыки (через запятую)</Label>
-          <Input value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="React, TypeScript, Figma" />
+          <Input
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            placeholder="React, TypeScript, Figma"
+          />
+          {user?.role === 'client' && (
+            <p className="text-[10px] text-muted-foreground italic">Для заказчиков это поле не обязательно</p>
+          )}
         </div>
-        <Button type="submit" disabled={save.isPending} className="rounded-full bg-gradient-primary shadow-glow">
+        <Button type="submit" disabled={save.isPending} className="w-full sm:w-auto rounded-full bg-gradient-primary shadow-glow px-8 h-11">
           {save.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
           Сохранить
         </Button>
       </form>
 
       {reviews.length > 0 && (
-        <div className="card-soft p-8">
+        <div className="card-soft p-5 sm:p-8">
           <h2 className="text-xl font-semibold mb-4">Отзывы</h2>
           <div className="space-y-4">
             {reviews.map((r) => (
